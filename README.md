@@ -14,11 +14,16 @@ RemindUs is an offline-first cognitive maintenance and reminder experience for s
 
 The Vite app is served at `http://localhost:3000`.
 
-## Render
+## Production and Render
 
-Use a Static Site service with:
+The production build is served by the lightweight `serve` package:
 
-- Build command: `npm install && npm run build`
-- Publish directory: `dist`
+- Build command: `npm install; npm run build`
+- Start command: `npm start`
+- Published directory: `dist`
 
-The app is a client-side Vite build and does not require a backend start command.
+The client-side Vite fallback keeps `/dashboard` available after a refresh.
+
+### Demo authentication
+
+RemindUs includes a clearly labelled local development flow so judges can explore the product without an external provider. Choose **Demo Login**, or enter a Gmail address and Indian mobile number and use the displayed development OTP `123456`. No SMS or email is sent, and this flow does not use production secrets.

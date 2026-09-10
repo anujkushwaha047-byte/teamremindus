@@ -32,6 +32,13 @@ type Reminder = {
   taken: boolean;
 };
 
+type AuthUser = {
+  name: string;
+  email: string;
+  mobile: string;
+  demo: boolean;
+};
+
 type SpeechRecognitionConstructor = new () => {
   lang: string;
   start: () => void;
@@ -46,6 +53,8 @@ const initialReminders: Reminder[] = [
   { id: 2, name: 'Drink some water', detail: 'Keep hydrated', time: '11:30 AM', type: 'medicine', taken: true },
   { id: 3, name: 'Physiotherapy session', detail: 'Room 204', time: '04:00 PM', type: 'appointment', taken: false },
 ];
+const DEMO_OTP = '123456';
+const AUTH_STORAGE_KEY = 'remindus-auth-user';
 
 const navItems = [
   { id: 'home', label: 'Home', icon: Home },
@@ -56,7 +65,12 @@ const navItems = [
 
 function App() {
   const [activePage, setActivePage] = useState('home');
-  const [showLanding, setShowLanding] = useState(true);
+  const [showLanding, setShowLanding] = useState(() => window.location.pathname !== '/dashboard');
+  const [showLogin, setShowLogin] = useState(() => window.location.pathname === '/dashboard' && !localStorage.getItem(AUTH_STORAGE_KEY));
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
+    const savedUser = localStorage.getItem(AUTH_STORAGE_KEY);
+    return savedUser ? JSON.parse(savedUser) as AuthUser : null;
+  });
   const [reminders, setReminders] = useState(initialReminders);
   const [showAddReminder, setShowAddReminder] = useState(false);
   const [newReminder, setNewReminder] = useState({ name: '', time: '06:00 PM' });
@@ -144,8 +158,29 @@ function App() {
     setGameScore((score) => score + 1);
   };
 
+  const enterApplication = (user: AuthUser) => {
+    setAuthUser(user);
+    setActivePage('home');
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+    window.history.pushState({}, '', '/dashboard');
+    setShowLanding(false);
+    setShowLogin(false);
+  };
+
+  const signOut = () => {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    setAuthUser(null);
+    setShowLogin(true);
+    setShowLanding(false);
+    window.history.pushState({}, '', '/');
+  };
+
+  if (!authUser && showLogin) {
+    return <LoginPage onBack={() => setShowLanding(true)} onLogin={enterApplication} />;
+  }
+
   if (showLanding) {
-    return <LandingPage onStart={() => setShowLanding(false)} />;
+    return <LandingPage onStart={() => { setShowLanding(false); setShowLogin(true); }} />;
   }
 
   return (
@@ -229,7 +264,7 @@ function App() {
           {activePage === 'reminders' && <RemindersPage reminders={reminders} onToggle={toggleReminder} onAdd={() => setShowAddReminder(true)} />}
           {activePage === 'activities' && <ActivitiesPage gameRunning={gameRunning} gameScore={gameScore} onStart={startGame} onCamera={openCamera} />}
           {activePage === 'progress' && <ProgressPage progress={progress} completed={completedCount} total={reminders.length} score={gameScore} />}
-          {activePage === 'settings' && <SettingsPage />}
+          {activePage === 'settings' && <SettingsPage user={authUser} onSignOut={signOut} />}
         </main>
       </div>
 
@@ -237,6 +272,34 @@ function App() {
       {cameraOpen && <div className="modal-backdrop"><div className="modal camera-modal"><div className="modal-header"><h2>Camera activity</h2><button onClick={closeCamera} aria-label="Close camera"><X /></button></div><video ref={videoRef} autoPlay playsInline /><p>Use your hand gestures to interact with activities.</p><button className="secondary-button" onClick={closeCamera}>Close camera</button></div></div>}
     </div>
   );
+}
+
+function LoginPage({ onBack, onLogin }: { onBack: () => void; onLogin: (user: AuthUser) => void }) {
+  const [step, setStep] = useState<'details' | 'otp'>('details');
+  const [form, setForm] = useState({ name: '', email: '', mobile: '' });
+  const [otp, setOtp] = useState('');
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+
+  const updateField = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }));
+  const sendOtp = (event: FormEvent) => {
+    event.preventDefault();
+    if (!form.name.trim()) return setError('Please enter your name.');
+    if (!/^[^\s@]+@gmail\.com$/i.test(form.email)) return setError('Please enter a valid Gmail address.');
+    if (!/^[6-9]\d{9}$/.test(form.mobile)) return setError('Please enter a valid 10-digit mobile number.');
+    setError('');
+    setNotice('Development mode: no message was sent. Use the demo OTP below.');
+    setStep('otp');
+  };
+  const verifyOtp = (event: FormEvent) => {
+    event.preventDefault();
+    if (!/^\d{6}$/.test(otp)) return setError('Please enter the 6-digit OTP.');
+    if (otp !== DEMO_OTP) return setError('That OTP is not correct. Please use the demo OTP shown above.');
+    onLogin({ name: form.name.trim(), email: form.email.toLowerCase(), mobile: form.mobile, demo: true });
+  };
+  const demoLogin = () => onLogin({ name: 'Demo User', email: 'demo@remindus.app', mobile: '9999999999', demo: true });
+
+  return <div className="auth-shell"><div className="auth-brand"><button className="brand" onClick={onBack} aria-label="Back to RemindUs landing"><span className="brand-mark"><ShieldCheck size={22} /></span><span><strong>Remind</strong>Us</span></button><span className="auth-secure"><ShieldCheck size={15} /> Simple &amp; private</span></div><main className="auth-layout"><section className="auth-copy"><p className="eyebrow">Your everyday care companion</p><h1>Welcome to a calmer way to stay on track.</h1><p>RemindUs brings memory support, medicine reminders, and family connection together in one gentle space.</p><div className="auth-promise"><Check size={17} /><span>Designed for seniors and the people who care for them.</span></div></section><section className="auth-card"><div className="demo-banner"><Sparkles size={17} /><span><strong>Demo Mode</strong><small>Use Demo Login to explore RemindUs without an OTP provider.</small></span></div>{step === 'details' ? <form onSubmit={sendOtp}><div className="auth-heading"><h2>Let&apos;s get started</h2><p>Enter your details to create a simple local session.</p></div><label>Your name<input value={form.name} onChange={(event) => updateField('name', event.target.value)} placeholder="Enter your name" autoComplete="name" /></label><label>Gmail address<input type="email" value={form.email} onChange={(event) => updateField('email', event.target.value)} placeholder="you@gmail.com" autoComplete="email" /></label><label>Mobile number<input type="tel" value={form.mobile} onChange={(event) => updateField('mobile', event.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile number" inputMode="numeric" autoComplete="tel" /></label>{error && <p className="auth-error" role="alert">{error}</p>}<button className="primary-button auth-submit" type="submit">Send OTP <ChevronRight size={18} /></button><div className="auth-divider"><span>or</span></div><button className="secondary-button demo-button" type="button" onClick={demoLogin}><Sparkles size={17} /> Demo Login</button></form> : <form onSubmit={verifyOtp}><div className="auth-heading"><h2>Verify your details</h2><p>Enter the 6-digit code to continue.</p></div><div className="otp-notice"><strong>Development OTP: {DEMO_OTP}</strong><span>No SMS or email was sent. This is a safe demo flow.</span></div><label>6-digit OTP<input className="otp-input" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="123456" inputMode="numeric" autoComplete="one-time-code" autoFocus /></label>{notice && <p className="auth-hint">{notice}</p>}{error && <p className="auth-error" role="alert">{error}</p>}<button className="primary-button auth-submit" type="submit">Verify OTP <Check size={18} /></button><button className="text-button auth-back" type="button" onClick={() => { setStep('details'); setError(''); }}>Change details</button></form>}</section></main></div>;
 }
 
 function LandingPage({ onStart }: { onStart: () => void }) {
@@ -337,8 +400,8 @@ function ProgressPage({ progress, completed, total, score }: { progress: number;
   return <PageHeader eyebrow="Every day counts" title="Your progress" description="Celebrate the little wins. They add up."><section className="progress-overview panel"><div className="progress-ring" style={{ '--progress': `${progress * 3.6}deg` } as CSSProperties}><div><strong>{progress}%</strong><span>today</span></div></div><div><span className="eyebrow">Today&apos;s overview</span><h2>You&apos;re building a healthy routine.</h2><p>{completed} of {total} reminders are complete, and you have a {score}-day activity streak.</p></div></section><section className="stats-grid progress-stats"><SummaryCard icon={<Check />} label="Reminders complete" value={`${completed}`} note="today" color="green" /><SummaryCard icon={<Trophy />} label="Activity streak" value={`${score}`} note="days" color="purple" /><SummaryCard icon={<HeartIcon />} label="Mood check-in" value="Good" note="last checked today" color="blue" /></section></PageHeader>;
 }
 
-function SettingsPage() {
-  return <PageHeader eyebrow="Make RemindUs yours" title="Settings" description="You and your care circle are in control."><section className="panel settings-list"><div className="setting-row"><span className="setting-symbol"><CircleUserRound /></span><div><strong>My profile</strong><span>Anuj Kushwaha</span></div><ChevronRight /></div><div className="setting-row"><span className="setting-symbol"><Bell /></span><div><strong>Reminder preferences</strong><span>Sound and gentle notifications</span></div><ChevronRight /></div><div className="setting-row"><span className="setting-symbol"><ShieldCheck /></span><div><strong>Care circle</strong><span>Invite a trusted family member</span></div><ChevronRight /></div></section></PageHeader>;
+function SettingsPage({ user, onSignOut }: { user: AuthUser | null; onSignOut: () => void }) {
+  return <PageHeader eyebrow="Make RemindUs yours" title="Settings" description="You and your care circle are in control."><section className="panel settings-list"><div className="setting-row"><span className="setting-symbol"><CircleUserRound /></span><div><strong>My profile</strong><span>{user?.name || 'RemindUs user'} · {user?.email || 'Local session'}</span></div><ChevronRight /></div><div className="setting-row"><span className="setting-symbol"><Bell /></span><div><strong>Reminder preferences</strong><span>Sound and gentle notifications</span></div><ChevronRight /></div><div className="setting-row"><span className="setting-symbol"><ShieldCheck /></span><div><strong>Care circle</strong><span>Invite a trusted family member</span></div><ChevronRight /></div><button className="secondary-button sign-out-button" onClick={onSignOut}>Sign out</button></section></PageHeader>;
 }
 
 function PageHeader({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children: ReactNode }) {
