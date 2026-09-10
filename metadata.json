@@ -1,0 +1,6 @@
+{
+  "name": "RemindUs - Bridging the Therapeutics",
+  "description": "Official website for Smart India Hackathon 2026 project SIH26003: RemindUs, an offline-first cognitive maintenance and zero-touch healthcare system for seniors.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
