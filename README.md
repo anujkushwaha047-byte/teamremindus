@@ -1,20 +1,24 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# RemindUs — Bridging the Therapeutics
 
-# Run and deploy your AI Studio app
+RemindUs is an offline-first cognitive maintenance and reminder experience for seniors, caregivers, and families (SIH26003).
 
-This contains everything you need to run your app locally.
+## Run locally
 
-View your app in AI Studio: https://ai.studio/apps/7fc505b1-d818-4a5e-a81c-246d3ed35136
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Copy `.env.example` to `.env.local` when configuring optional integrations.
 3. Run the app:
    `npm run dev`
+
+The Vite app is served at `http://localhost:3000`.
+
+## Render
+
+Use a Static Site service with:
+
+- Build command: `npm install && npm run build`
+- Publish directory: `dist`
+
+The app is a client-side Vite build and does not require a backend start command.
