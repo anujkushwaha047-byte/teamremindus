@@ -11,7 +11,6 @@ import {
   Home,
   Menu,
   Mic,
-  Pause,
   Play,
   Plus,
   Settings,
@@ -57,6 +56,7 @@ const navItems = [
 
 function App() {
   const [activePage, setActivePage] = useState('home');
+  const [showLanding, setShowLanding] = useState(true);
   const [reminders, setReminders] = useState(initialReminders);
   const [showAddReminder, setShowAddReminder] = useState(false);
   const [newReminder, setNewReminder] = useState({ name: '', time: '06:00 PM' });
@@ -144,10 +144,14 @@ function App() {
     setGameScore((score) => score + 1);
   };
 
+  if (showLanding) {
+    return <LandingPage onStart={() => setShowLanding(false)} />;
+  }
+
   return (
     <div className="app-shell">
       <header className="topbar">
-        <button className="brand" onClick={() => setActivePage('home')} aria-label="Go to RemindUs home">
+        <button className="brand" onClick={() => setShowLanding(true)} aria-label="Go to RemindUs home">
           <span className="brand-mark"><ShieldCheck size={22} /></span>
           <span><strong>Remind</strong>Us</span>
         </button>
@@ -233,6 +237,80 @@ function App() {
       {cameraOpen && <div className="modal-backdrop"><div className="modal camera-modal"><div className="modal-header"><h2>Camera activity</h2><button onClick={closeCamera} aria-label="Close camera"><X /></button></div><video ref={videoRef} autoPlay playsInline /><p>Use your hand gestures to interact with activities.</p><button className="secondary-button" onClick={closeCamera}>Close camera</button></div></div>}
     </div>
   );
+}
+
+function LandingPage({ onStart }: { onStart: () => void }) {
+  return (
+    <div className="landing-shell">
+      <header className="landing-nav">
+        <button className="brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Back to top">
+          <span className="brand-mark"><ShieldCheck size={22} /></span>
+          <span><strong>Remind</strong>Us</span>
+        </button>
+        <nav className="landing-links" aria-label="Landing page navigation">
+          <a href="#how-it-works">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#care">For care circles</a>
+        </nav>
+        <button className="primary-button nav-cta" onClick={onStart}>Open RemindUs <ChevronRight size={17} /></button>
+      </header>
+
+      <main>
+        <section className="landing-hero">
+          <div className="hero-copy">
+            <div className="hero-pill"><span className="live-dot" /> Thoughtful care, made simpler</div>
+            <h1>More calm in every day of care.</h1>
+            <p>RemindUs brings together gentle reminders, cognitive activities, and connected support in one reassuring space for seniors and their families.</p>
+            <div className="hero-actions">
+              <button className="primary-button hero-button" onClick={onStart}>Get started <ChevronRight size={18} /></button>
+              <a className="ghost-button" href="#how-it-works"><Play size={16} fill="currentColor" /> See how it works</a>
+            </div>
+            <div className="hero-proof"><span className="proof-avatars"><span>AK</span><span>RS</span><span>+</span></span><span>Designed for everyday independence</span></div>
+          </div>
+          <div className="hero-preview" aria-label="Preview of the RemindUs dashboard">
+            <div className="preview-glow" />
+            <div className="preview-window">
+              <div className="preview-top"><span className="preview-brand"><span className="brand-mark"><ShieldCheck size={12} /></span> RemindUs</span><span className="preview-status"><span className="live-dot" /> Today</span></div>
+              <div className="preview-heading"><span>Good morning, Anuj <span aria-hidden="true">👋</span></span><strong>33% <small>complete</small></strong></div>
+              <div className="preview-progress"><span /></div>
+              <div className="preview-label">Today&apos;s reminders</div>
+              <div className="preview-reminder"><span className="preview-icon medicine">✚</span><span><strong>Morning medicines</strong><small>After breakfast · 09:00 AM</small></span><span className="preview-check"><Check size={14} /></span></div>
+              <div className="preview-reminder"><span className="preview-icon brain">🧠</span><span><strong>Remember the picture</strong><small>5-minute brain activity</small></span><span className="preview-play"><Play size={12} fill="currentColor" /></span></div>
+              <div className="preview-footer"><span><Mic size={14} /> Talk to RemindUs</span><span><Camera size={14} /> Use camera</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section className="value-strip" aria-label="RemindUs principles">
+          <div><ShieldCheck size={19} /><span><strong>Privacy-first</strong><small>Your care stays personal</small></span></div>
+          <div><Volume2 size={19} /><span><strong>Voice-friendly</strong><small>Speak when it&apos;s easier</small></span></div>
+          <div><Sparkles size={19} /><span><strong>Senior-friendly</strong><small>Clear, calm, and kind</small></span></div>
+          <div><Activity size={19} /><span><strong>Offline-ready</strong><small>Support for real life</small></span></div>
+        </section>
+
+        <section className="landing-section process-section" id="how-it-works">
+          <div className="section-intro"><p className="eyebrow">A gentler rhythm</p><h2>Support that meets people where they are.</h2><p>No complicated setup. Just the right support at the right moment.</p></div>
+          <div className="process-grid"><ProcessStep number="01" title="Remember" copy="Keep important medicines, appointments, and routines close at hand." icon={<Bell />} /><ProcessStep number="02" title="Remind" copy="Receive friendly prompts that are easy to understand and act on." icon={<Clock3 />} /><ProcessStep number="03" title="Engage" copy="Build healthy habits through small, enjoyable cognitive activities." icon={<BrainIcon />} /><ProcessStep number="04" title="Connect" copy="Give trusted family members a clearer view of how to help." icon={<HeartIcon />} /></div>
+        </section>
+
+        <section className="landing-section features-section" id="features">
+          <div className="section-intro centered"><p className="eyebrow">One place for everyday care</p><h2>Small moments. Meaningful support.</h2><p>Everything is designed to feel familiar, useful, and reassuring.</p></div>
+          <div className="feature-grid"><FeatureCard icon={<Bell />} title="Medication reminders" copy="Make the next step clear, without making the day feel busy." accent="teal" /><FeatureCard icon={<BrainIcon />} title="Cognitive activities" copy="Gentle memory and focus activities that celebrate progress." accent="orange" /><FeatureCard icon={<Mic />} title="Voice interaction" copy="Ask for help or check in naturally with a simple voice prompt." accent="purple" /><FeatureCard icon={<ShieldCheck />} title="Care circle connection" copy="Keep family and caregivers informed without taking away independence." accent="blue" /></div>
+        </section>
+
+        <section className="care-banner" id="care"><div><p className="eyebrow">For seniors, families, and caregivers</p><h2>Care feels better when everyone feels connected.</h2><p>RemindUs helps bridge the distance between therapeutic plans and everyday life, one clear moment at a time.</p></div><button className="primary-button hero-button" onClick={onStart}>Explore the dashboard <ChevronRight size={18} /></button></section>
+      </main>
+      <footer className="landing-footer"><span><strong>Remind</strong>Us</span><span>Bridging the Therapeutics · SIH26003</span><button onClick={onStart}>Open app <ChevronRight size={15} /></button></footer>
+    </div>
+  );
+}
+
+function ProcessStep({ number, title, copy, icon }: { number: string; title: string; copy: string; icon: ReactNode }) {
+  return <article className="process-step"><div className="step-top"><span>{number}</span><span className="step-icon">{icon}</span></div><h3>{title}</h3><p>{copy}</p></article>;
+}
+
+function FeatureCard({ icon, title, copy, accent }: { icon: ReactNode; title: string; copy: string; accent: string }) {
+  return <article className={`feature-card ${accent}`}><span className="feature-icon">{icon}</span><h3>{title}</h3><p>{copy}</p><span className="feature-arrow"><ChevronRight size={17} /></span></article>;
 }
 
 function SummaryCard({ icon, label, value, note, color }: { icon: ReactNode; label: string; value: string; note: string; color: string }) {
